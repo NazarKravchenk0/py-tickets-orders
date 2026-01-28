@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Type
 
-from django.db.models import Count, ExpressionWrapper, F, IntegerField, QuerySet
+from django.db.models import (
+    Count,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    QuerySet,
+)
 from django.utils.dateparse import parse_date
 from rest_framework import serializers, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -27,8 +33,6 @@ def _parse_int_list(value: str) -> list[int]:
     items = []
     for part in value.split(","):
         part = part.strip()
-        if not part:
-            continue
         if part.isdigit():
             items.append(int(part))
     return items
@@ -83,12 +87,19 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = (
-        MovieSession.objects.select_related("movie", "cinema_hall")
-        .prefetch_related("movie__genres", "movie__actors")
+        MovieSession.objects.select_related(
+            "movie",
+            "cinema_hall",
+        )
+        .prefetch_related(
+            "movie__genres",
+            "movie__actors",
+        )
         .annotate(
             tickets_sold=Count("tickets", distinct=True),
             hall_capacity=ExpressionWrapper(
-                F("cinema_hall__rows") * F("cinema_hall__seats_in_row"),
+                F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row"),
                 output_field=IntegerField(),
             ),
         )
@@ -106,7 +117,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date_str = self.request.query_params.get("date")
         if date_str:
             date_value = parse_date(date_str)
-            if date_value is not None:
+            if date_value:
                 qs = qs.filter(show_time__date=date_value)
 
         movie = self.request.query_params.get("movie")
