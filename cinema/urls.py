@@ -10,6 +10,8 @@ from cinema.views import (
     OrderViewSet,
 )
 
+app_name = "cinema"
+
 router = DefaultRouter()
 router.register("genres", GenreViewSet)
 router.register("actors", ActorViewSet)
