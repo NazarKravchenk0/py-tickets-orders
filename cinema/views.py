@@ -13,7 +13,14 @@ from django.utils.dateparse import parse_date
 from rest_framework import serializers, viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from cinema.models import Actor, CinemaHall, Genre, Movie, MovieSession, Order
+from cinema.models import (
+    Actor,
+    CinemaHall,
+    Genre,
+    Movie,
+    MovieSession,
+    Order,
+)
 from cinema.serializers import (
     ActorSerializer,
     CinemaHallSerializer,
@@ -30,12 +37,12 @@ from cinema.serializers import (
 
 
 def _parse_int_list(value: str) -> list[int]:
-    items = []
+    result = []
     for part in value.split(","):
         part = part.strip()
         if part.isdigit():
-            items.append(int(part))
-    return items
+            result.append(int(part))
+    return result
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -61,7 +68,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         title = self.request.query_params.get("title")
         if title:
-            qs = qs.filter(title__icontains=title.strip())
+            qs = qs.filter(title__icontains=title)
 
         genres = self.request.query_params.get("genres")
         if genres:
@@ -136,10 +143,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
+    queryset = Order.objects.all()
 
     def get_queryset(self) -> QuerySet[Order]:
         return (
-            Order.objects.filter(user=self.request.user)
+            super()
+            .get_queryset()
+            .filter(user=self.request.user)
             .prefetch_related(
                 "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall",
